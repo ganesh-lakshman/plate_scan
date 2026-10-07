@@ -152,7 +152,7 @@ curl -X POST http://localhost:8000/api/v1/cases/<case_id>/claim \
 ## Assumptions
 
 1. **VIN is the primary vehicle identifier** — the case-matching logic branches on VIN, not plate (plates can change).
-2. **One active case per VIN per tenant** — if a tenant already has an active case for a VIN, new scans link to it rather than creating a duplicate.
+2. **One open case per VIN per tenant** — pending and active cases are reused by later scans for that tenant and VIN. Each scan event is still stored separately and linked to that case.
 3. **Pending cases are visible cross-tenant** — the document says any user can claim; visibility is a prerequisite.
 4. **Claiming re-assigns tenant** — when Tenant A claims a case originated by Tenant B, the case moves to Tenant A. The `originated_by_tenant_id` preserves origin lineage.
 5. **Scans are linked to cases after claim** — when a case is claimed, all prior scans for that VIN are associated with the case.

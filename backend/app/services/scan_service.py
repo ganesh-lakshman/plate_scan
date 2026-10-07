@@ -46,30 +46,36 @@ async def ingest_scan(
     )
     db.add(scan)
 
-    # Check for an existing active case for this VIN within this tenant
-    active_case = (
+    # Reuse an open case for this VIN within this tenant.
+    open_case = (
         db.query(Case)
         .filter(
             and_(
                 Case.vin == vin,
                 Case.tenant_id == tenant_id,
-                Case.status == CaseStatus.ACTIVE.value,
+                Case.status.in_(
+                    (
+                        CaseStatus.PENDING_CLAIM.value,
+                        CaseStatus.ACTIVE.value,
+                    )
+                ),
             )
         )
+        .order_by(Case.created_at.asc())
         .first()
     )
 
-    if active_case:
-        # Existing-case flow: link the scan to the case
-        scan.case_id = active_case.id
+    if open_case:
+        # Every scan is retained, but open cases are not duplicated.
+        scan.case_id = open_case.id
         db.commit()
         db.refresh(scan)
         return {
             "scan_id": scan.id,
             "flow": "existing_case",
-            "case_id": active_case.id,
+            "case_id": open_case.id,
             "eligible": None,
-            "message": f"Scan linked to existing active case {active_case.id}.",
+            "message": f"Scan linked to existing case {open_case.id}.",
         }
 
     # New-case flow: check eligibility via mock partner network
