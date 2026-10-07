@@ -149,6 +149,30 @@ curl -X POST http://localhost:8000/api/v1/cases/<case_id>/claim \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+### 4. List cases
+Use the token from step 3 to list the signed-in user's tenant cases and all pending cases that can be claimed:
+
+```bash
+curl http://localhost:8000/api/v1/cases \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+To list only pending cases across tenants:
+
+```bash
+curl "http://localhost:8000/api/v1/cases?status=pending_claim" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+### 5. View a case's scan trail
+Set `CASE_ID` to the `case_id` returned by either scan example, then request all scans for that case's VIN in time order:
+
+```bash
+CASE_ID="case-a-active-001"
+curl "http://localhost:8000/api/v1/cases/$CASE_ID/scans" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
 ## Assumptions
 
 1. **VIN is the primary vehicle identifier** — the case-matching logic branches on VIN, not plate (plates can change).
